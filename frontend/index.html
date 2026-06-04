@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Warehouse Optimizer — ABC Arı Kolonisi</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="navbar">
+  <div class="nav-brand">
+    <span class="brand-icon">🏭</span>
+    <span class="brand-name">Warehouse Optimizer</span>
+    <span class="brand-sub">ABC Arı Kolonisi · Apriori · Karaboğa 2005</span>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showTab('dashboard')">Dashboard</button>
+    <button class="nav-tab"        onclick="showTab('placement')">Ürün Yerleşim</button>
+    <button class="nav-tab"        onclick="showTab('route')">Rota Optimizasyonu</button>
+    <button class="nav-tab"        onclick="showTab('apriori')">Apriori Kuralları</button>
+    <button class="nav-tab"        onclick="showTab('wave')">Wave Sorgula</button>
+  </div>
+  <button class="btn-pdf" onclick="downloadReport()" id="btn-pdf">⬇ PDF Rapor</button>
+  <div id="api-status" class="api-badge api-loading">Bağlanıyor...</div>
+</nav>
+
+<!-- ════════════════════════════════════════════════════════════
+     DASHBOARD
+════════════════════════════════════════════════════════════ -->
+<section id="tab-dashboard" class="tab-content active">
+  <div class="page-header">
+    <h1>Depo Analiz Paneli</h1>
+    <p>Gerçek veri · ABC Arı Kolonisi Algoritması (Karaboğa 2005) · abc.erciyes.edu.tr</p>
+  </div>
+
+  <div class="stats-grid" id="stats-grid">
+    <div class="stat-card loading-placeholder"></div>
+    <div class="stat-card loading-placeholder"></div>
+    <div class="stat-card loading-placeholder"></div>
+    <div class="stat-card loading-placeholder"></div>
+    <div class="stat-card loading-placeholder"></div>
+    <div class="stat-card loading-placeholder"></div>
+  </div>
+
+  <div class="charts-row">
+    <div class="chart-card">
+      <h3>ABC Sınıf Dağılımı (Pareto Analizi)</h3>
+      <canvas id="chart-abc" height="200"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Strateji Karşılaştırması — IO Mesafesi</h3>
+      <canvas id="chart-strategy" height="200"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <h3>Wave Örnekleri — Rota Mesafesi Dağılımı</h3>
+    <canvas id="chart-wave" height="120"></canvas>
+  </div>
+
+  <div class="insight-grid" id="insight-grid"></div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     ÜRÜN YERLEŞİM
+════════════════════════════════════════════════════════════ -->
+<section id="tab-placement" class="tab-content">
+  <div class="page-header">
+    <h1>Ürün Yerleşim Optimizasyonu</h1>
+    <p>Ürünlerinizi frekanslarıyla girin — ABC Pareto sınıflandırmasıyla IO'ya en yakın raflara atanır</p>
+  </div>
+
+  <div class="tool-layout">
+    <div class="tool-panel">
+      <div class="panel-header">
+        <h3>Ürün Listesi</h3>
+        <button class="btn-add" onclick="addPlacementRow()">+ Ürün Ekle</button>
+      </div>
+      <div class="form-hint">Frekans: günlük ortalama kaç kez toplandığı</div>
+      <div id="placement-rows"></div>
+      <div class="form-actions">
+        <button class="btn-primary" onclick="submitPlacement()">Yerleşimi Hesapla</button>
+        <button class="btn-secondary" onclick="clearPlacement()">Temizle</button>
+      </div>
+    </div>
+
+    <div class="tool-panel" id="placement-result-panel" style="display:none">
+      <div class="panel-header">
+        <h3>Yerleşim Sonuçları</h3>
+        <button class="btn-secondary btn-sm" onclick="sendToRoute()">Rotaya Gönder →</button>
+      </div>
+      <div id="zone-breakdown"></div>
+      <table class="result-table" id="placement-table">
+        <thead>
+          <tr>
+            <th>#</th><th>Ürün</th><th>Frekans</th>
+            <th>ABC Sınıfı</th><th>Bölge</th>
+            <th>IO Mesafesi</th><th>En Yakın LC</th>
+          </tr>
+        </thead>
+        <tbody id="placement-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     ROTA OPTİMİZASYONU
+════════════════════════════════════════════════════════════ -->
+<section id="tab-route" class="tab-content">
+  <div class="page-header">
+    <h1>Rota Optimizasyonu</h1>
+    <p>ABC Arı Kolonisi Algoritması (Karaboğa 2005) — Greedy ile karşılaştırmalı</p>
+  </div>
+
+  <div class="tool-layout">
+    <div class="tool-panel">
+      <div class="panel-header">
+        <h3>Toplanacak Ürünler</h3>
+        <button class="btn-add" onclick="addRouteRow()">+ Ürün Ekle</button>
+      </div>
+      <div class="form-hint">Bölge: A (en yakın) — E (en uzak) | Raf: 1–10</div>
+      <div id="route-import-bar" style="display:none">
+        <button class="btn-import" onclick="importFromPlacement()">
+          ↩ Yerleşim Sonuçlarından İçeri Aktar
+        </button>
+      </div>
+      <div id="route-rows"></div>
+      <div class="form-actions">
+        <button class="btn-primary" onclick="submitRoute()">ABC ile Rotayı Hesapla</button>
+        <button class="btn-secondary" onclick="clearRoute()">Temizle</button>
+      </div>
+    </div>
+
+    <div class="tool-panel" id="route-result-panel" style="display:none">
+      <div class="panel-header">
+        <h3>Optimal Toplama Sırası</h3>
+        <div id="route-summary-badge"></div>
+      </div>
+      <div id="route-algo-info" class="algo-info"></div>
+      <div id="route-steps"></div>
+      <div class="chart-card" style="margin-top:16px" id="convergence-card">
+        <h3>ABC Yakınsama Eğrisi</h3>
+        <canvas id="chart-convergence" height="160"></canvas>
+      </div>
+      <div class="map-section">
+        <h4>Depo Haritası</h4>
+        <div class="map-wrapper">
+          <svg id="warehouse-map" viewBox="0 0 760 360"
+               xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     APRİORİ KURALLARI
+════════════════════════════════════════════════════════════ -->
+<section id="tab-apriori" class="tab-content">
+  <div class="page-header">
+    <h1>Apriori Birliktelik Kuralları</h1>
+    <p>Birlikte sipariş edilen ürün çiftleri · min_support=0.004 · min_lift=1.2</p>
+  </div>
+
+  <div class="stats-grid" id="apriori-stats" style="grid-template-columns:repeat(3,1fr)">
+    <div class="stat-card">
+      <div class="stat-label">Toplam Kural</div>
+      <div class="stat-value stat-accent" id="ap-total-rules">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Güçlü Kural (Lift ≥ 3)</div>
+      <div class="stat-value stat-accent" id="ap-strong-rules">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">En Yüksek Lift</div>
+      <div class="stat-value stat-accent" id="ap-max-lift">—</div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <h3>Top 20 Birliktelik Kuralı (Lift'e Göre)</h3>
+    <div id="apriori-table-wrap">
+      <table class="result-table" id="apriori-table">
+        <thead>
+          <tr>
+            <th>#</th><th>Antecedent</th><th>Consequent</th>
+            <th>Support</th><th>Confidence</th><th>Lift</th>
+          </tr>
+        </thead>
+        <tbody id="apriori-tbody">
+          <tr><td colspan="6" style="text-align:center;color:var(--text-muted)">
+            Yükleniyor...
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     WAVE SORGULA
+════════════════════════════════════════════════════════════ -->
+<section id="tab-wave" class="tab-content">
+  <div class="page-header">
+    <h1>Wave Sorgula & ABC Optimize Et</h1>
+    <p>Wave numarası gir → gerçek veri + ABC rota optimizasyonu</p>
+  </div>
+
+  <div class="tool-layout">
+    <div class="tool-panel" style="max-width:360px">
+      <div class="panel-header"><h3>Wave Arama</h3></div>
+      <div class="form-hint">Örnek wave numaraları: 33195, 33293, 33556</div>
+      <div class="form-row" style="margin-bottom:16px">
+        <input type="number" id="wave-input" class="inp-name"
+               placeholder="Wave numarası gir..." min="1" />
+        <button class="btn-primary" onclick="queryWave()">Sorgula</button>
+      </div>
+      <div style="margin-top:8px">
+        <button class="btn-primary" onclick="optimizeWave()" id="btn-optimize-wave"
+                style="display:none;width:100%">
+          ⚡ ABC ile Optimize Et
+        </button>
+      </div>
+      <div id="wave-detail-panel" style="margin-top:16px"></div>
+    </div>
+
+    <div class="tool-panel" id="wave-result-panel" style="display:none">
+      <div class="panel-header">
+        <h3>ABC Rota Sonucu</h3>
+        <div id="wave-summary-badge"></div>
+      </div>
+      <div id="wave-algo-info" class="algo-info"></div>
+      <div id="wave-route-steps"></div>
+      <div class="chart-card" style="margin-top:16px">
+        <h3>ABC Yakınsama Eğrisi</h3>
+        <canvas id="chart-wave-convergence" height="160"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="app.js"></script>
+</body>
+</html>

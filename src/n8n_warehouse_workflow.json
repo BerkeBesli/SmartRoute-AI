@@ -1,0 +1,234 @@
+{
+  "name": "Warehouse Optimizer — ABC + Gemini",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "warehouse-new-wave",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-webhook",
+      "name": "1. Yeni Wave Bildirimi",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "notes": "Dışarıdan yeni wave gelince tetiklenir.\nÖrnek body: {\"wave_id\": \"33293\"}"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5000/webhook/new-wave",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "wave_id",
+              "value": "={{ $json.body.wave_id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "node-flask-abc",
+      "name": "2. ABC Rota Optimizasyonu",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        300
+      ],
+      "notes": "Flask API'ye wave_id gönderir.\nABC algoritması çalışır, optimal rota döner."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "YOUR_GEMINI_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"Sen bir depo optimizasyon asistanısın. Aşağıdaki rota bilgisini operatöre kısa, net ve anlaşılır Türkçe ile açıkla. Adım adım toplama sırasını belirt ve mesafe kazanımını vurgula.\\n\\nRota Bilgisi: {{ $json.summary_for_ai }}\\n\\nLütfen 3-4 cümle ile açıkla.\"\n    }]\n  }]\n}",
+        "options": {}
+      },
+      "id": "node-gemini",
+      "name": "3. Gemini AI Açıklama",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        300
+      ],
+      "notes": "ABC sonucunu Gemini'ye gönderir.\nTürkçe operatör açıklaması üretir."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Apriori+ABC sonucu + Gemini açıklamasını birleştir\nconst abc = $('2. ABC Rota Optimizasyonu').item.json;\nconst gem = $('3. Gemini AI Açıklama').item.json;\n\nlet aiExplanation = '';\ntry {\n  aiExplanation = gem.candidates[0].content.parts[0].text;\n} catch(e) {\n  aiExplanation = 'Açıklama üretilemedi.';\n}\n\nreturn [{\n  json: {\n    wave_id:          abc.wave_id,\n    optimal_route:    abc.optimal_route,\n    total_distance:   abc.total_distance,\n    greedy_distance:  abc.greedy_distance,\n    improvement_pct:  abc.improvement,\n    n_products:       abc.n_products,\n    algorithm:        abc.algorithm,\n    apriori_used:     abc.apriori_used,\n    rf_prediction:    abc.rf_prediction,\n    anomaly:          abc.anomaly,\n    anomaly_message:  abc.anomaly_message,\n    ai_explanation:   aiExplanation,\n    timestamp:        new Date().toISOString(),\n  }\n}];"
+      },
+      "id": "node-merge",
+      "name": "4. Sonuçları Birleştir",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        300
+      ],
+      "notes": "ABC sonucu + Gemini açıklamasını tek objede toplar."
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "node-response",
+      "name": "5. Webhook Yanıtı",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        180
+      ],
+      "notes": "Tetikleyiciye tam sonucu döner."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-improvement",
+              "leftValue": "={{ $json.improvement_pct }}",
+              "rightValue": 5,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "node-if",
+      "name": "6. İyileşme > %5?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        420
+      ],
+      "notes": "ABC iyileşmesi %5'ten büyükse Slack bildirimi gönder."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "YOUR_SLACK_WEBHOOK_URL",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"text\": \"🏭 *Depo Rota Optimizasyonu*\\n\\n*Wave:* {{ $json.wave_id }}\\n*Algoritma:* {{ $json.algorithm }}\\n*Ürün:* {{ $json.n_products }} adet\\n*Mesafe:* {{ $json.total_distance }}m (Greedy: {{ $json.greedy_distance }}m)\\n*Kazanım:* %{{ $json.improvement_pct }}\\n*RF Tahmin:* {{ $json.rf_prediction }}m\\n{{ $json.anomaly ? '⚠️ ANOMALİ: ' + $json.anomaly_message : '✅ Normal' }}\\n\\n*AI Açıklama:*\\n{{ $json.ai_explanation }}\"\n}",
+        "options": {}
+      },
+      "id": "node-slack",
+      "name": "7. Slack Bildirimi",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        300
+      ],
+      "notes": "İyileşme %5'ten büyükse Slack'e bildirim gönderir.\nSlack Webhook URL'ini ayarlayın."
+    }
+  ],
+  "connections": {
+    "1. Yeni Wave Bildirimi": {
+      "main": [
+        [
+          {
+            "node": "2. ABC Rota Optimizasyonu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. ABC Rota Optimizasyonu": {
+      "main": [
+        [
+          {
+            "node": "3. Gemini AI Açıklama",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Gemini AI Açıklama": {
+      "main": [
+        [
+          {
+            "node": "4. Sonuçları Birleştir",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. Sonuçları Birleştir": {
+      "main": [
+        [
+          {
+            "node": "5. Webhook Yanıtı",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "6. İyileşme > %5?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6. İyileşme > %5?": {
+      "main": [
+        [
+          {
+            "node": "7. Slack Bildirimi",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {}
+}
