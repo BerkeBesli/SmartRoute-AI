@@ -214,7 +214,6 @@ curl -X POST http://localhost:5678/webhook/warehouse-new-wave \
 
 > Karaboga, D. (2005). *An idea based on honey bee swarm for numerical optimization*. Technical Report TR06, Erciyes University, Engineering Faculty, Computer Engineering Department.  
 > 🔗 [abc.erciyes.edu.tr](https://abc.erciyes.edu.tr)
-
 **Veri Seti:** PMC12269467 — Gerçek Ayakkabı Fabrikası Deposu
 
 ---
