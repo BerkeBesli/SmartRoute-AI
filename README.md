@@ -1,3 +1,8 @@
+
+<div align="center">
+  <img src="https://github.com/BerkeBesli/SmartRoute-AI/blob/main/SmartRoute%20AI%20Banner.png" width="800">
+</div>
+
 # 🏭 SmartRoute AI — Sipariş Toplama Rota Optimizasyonu
 
 > **Miuul AI Data Scientist Bootcamp — 20. Dönem Bitirme Projesi**
