@@ -5,8 +5,6 @@
 
 # 🏭 SmartRoute AI — Sipariş Toplama Rota Optimizasyonu
 
-> **Miuul AI Data Scientist Bootcamp — 20. Dönem Bitirme Projesi**
-
 ABC Arı Kolonisi Algoritması + Apriori Birliktelik Kuralları ile depo sipariş toplama rotalarını optimize eden uçtan uca AI sistemi.
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue?style=flat-square&logo=python)](https://python.org)
