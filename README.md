@@ -60,12 +60,12 @@ warehouse_optimization/
 
 ## 🔬 Metodoloji — 8 Faz Pipeline
 
-### Faz 1 — EDA & Veri Ön İşleme
+### EDA & Veri Ön İşleme
 - 122.370 sipariş, 9.707 wave analizi
 - Outlier tespiti (baskılama yok — gerçek operasyonel değerler)
 - Saatlik yoğunluk, skewness analizi (2.46)
 
-### Faz 2 — Feature Engineering
+### Feature Engineering
 - `Dalga_Yogunlugu` = total_items / unique_products
 - `Loc_Verimlilik` = unique_products / unique_locations
 - `nearest_lc` — Min. Öklid mesafesiyle LC ataması
