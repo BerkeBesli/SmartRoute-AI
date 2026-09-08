@@ -58,7 +58,7 @@ warehouse_optimization/
 
 ---
 
-## 🔬 Metodoloji — 8 Faz Pipeline
+## 🔬 Proje Rotası
 
 ### EDA & Veri Ön İşleme
 - 122.370 sipariş, 9.707 wave analizi
@@ -107,13 +107,13 @@ ABC Arı Kolonisi Optimizasyonu (Karaboğa 2005)
 
 `x_new = x_i + phi*(x_i - x_k)` — Karaboğa (2005) sürekli uzay formülü
 
-### Faz 7 — ML Modeli (Random Forest)
+### ML Modeli (Random Forest)
 - **Hedef:** `abc_optimized_distance` (Apriori+ABC çıktısı)
 - **Features:** total_items, unique_locations, unique_lc, unique_products, Dalga_Yogunlugu
 - **En önemli feature:** unique_lc (%93.4)
 - **R² = 0.7958** | MAE = 184.83m (5-Fold CV)
 
-### Faz 8 — Storage Policy Karşılaştırması
+### Storage Policy Karşılaştırması
 | Strateji | Greedy | Apriori+ABC | Kazanım |
 |----------|--------|-------------|---------|
 | Mevcut | 1.270m | 1.116m | ↓%12.1 |
