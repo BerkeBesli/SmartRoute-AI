@@ -71,13 +71,13 @@ warehouse_optimization/
 - `nearest_lc` — Min. Öklid mesafesiyle LC ataması
 - Wave bazında toplam mesafe hesabı
 
-### Faz 3 — ABC Analizi & Stok Yerleşimi
+### ABC Analizi & Stok Yerleşimi
 - Pareto bazlı A/B/C sınıflandırması (%80/%95 kümülatif)
 - IO noktası (LC-01: 66, -29, 1) bazlı Manhattan mesafesi
 - Makale ABCCOD uyum oranı: %57.2 → **Veri bazlı ABC kullanıldı**
 - **Kazanım: 1.131m → 241m (↓%78.7)**
 
-### Faz 4 — Apriori Birliktelik Kuralları
+### Apriori Birliktelik Kuralları
 ```
 min_support    = 0.004
 min_confidence = 0.10
@@ -86,7 +86,7 @@ min_lift       = 1.2
 - 3.561 kural, max lift: **85.81** (F7LULH ↔ B24J86)
 - Güçlü kural (Lift ≥ 3): 800+
 
-### Faz 5 — Özgün Algoritma: Apriori + ABC (⭐ Projenin Kalbi)
+### Özgün Algoritma: Apriori + ABC (⭐ Projenin Kalbi)
 ```
 Apriori Güçlü Kurallar (Lift≥3)
         ↓
@@ -99,7 +99,7 @@ ABC Arı Kolonisi Optimizasyonu (Karaboğa 2005)
 - Greedy'ye kıyasla **ortalama ↓%8.96**, maksimum **↓%45.45**
 - 8.778 wave'in %62.3'ünde ABC > Greedy
 
-### Faz 6 — Hiperparametre Optimizasyonu
+### Hiperparametre Optimizasyonu
 | Yöntem | Deneme | Süre | Best Dist |
 |--------|--------|------|-----------|
 | Grid Search | 27 | ~42s | 1.014m |
