@@ -58,7 +58,7 @@ warehouse_optimization/
 
 ---
 
-## 🔬 Proje Rotası
+## 🔬 Proje Haritası
 
 ### EDA & Veri Ön İşleme
 - 122.370 sipariş, 9.707 wave analizi
