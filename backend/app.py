@@ -17,7 +17,6 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.abspath(os.path.join(BASE_DIR, '..', 'data'))
 OUT_DIR  = os.path.abspath(os.path.join(BASE_DIR, '..', 'outputs'))
 
-# ── Veri Yukle ────────────────────────────────────────────────────
 try:
     loader = DataLoader(DATA_DIR)
     optimizer = WarehouseOptimizer(
@@ -35,7 +34,7 @@ except Exception as e:
     data_loaded = False
     print(f"[✗] Veri yüklenemedi: {e}")
 
-# ── Apriori Cache ─────────────────────────────────────────────────
+# Apriori 
 apriori_rules_cache = []
 try:
     rules_path = os.path.join(OUT_DIR, 'association_rules.csv')
@@ -48,7 +47,7 @@ try:
 except Exception as e:
     print(f"[!] Apriori kuralları yüklenemedi: {e}")
 
-# ── RF Model ──────────────────────────────────────────────────────
+# RF Model 
 rf_model = None
 try:
     with open(os.path.join(OUT_DIR, 'rf_model.pkl'), 'rb') as f:
