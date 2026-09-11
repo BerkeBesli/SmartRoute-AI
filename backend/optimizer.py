@@ -31,7 +31,7 @@ class WarehouseOptimizer:
         self.lc_coords   = lc_coords
         self.storage_map = storage_map
 
-    # ── Mesafe Fonksiyonları ──────────────────────────────────────
+    #  Mesafe Fonksiyonları
 
     def _lc_dist(self, lc1: str, lc2: str) -> float:
         p1 = self.lc_coords.get(lc1, {})
@@ -61,7 +61,7 @@ class WarehouseOptimizer:
                 best_d, best_lc = d, lbl
         return best_lc
 
-    # ── Greedy (En Yakın Komşu) ───────────────────────────────────
+    # Greedy (En Yakın Komşu) 
 
     def _greedy_route(self, lc_list: list) -> list:
         lc_list = list(dict.fromkeys(lc_list))
@@ -77,7 +77,7 @@ class WarehouseOptimizer:
             current = nearest
         return route
 
-    # ── ABC Algoritması (Karaboğa 2005) ──────────────────────────
+    # ABC Algoritması (Karaboğa 2005)
 
     def _two_opt(self, route: list) -> list:
         r = route[:]
@@ -173,7 +173,7 @@ class WarehouseOptimizer:
                 else:
                     trial[i] += 1
 
-            # Memorize best
+          
             bi = max(range(food_n), key=lambda i: fits[i])
             if fits[bi] > (1.0/best_d if best_d > 0 else 0):
                 best_r = foods[bi][:]; best_d = self._route_dist(best_r)
@@ -199,7 +199,7 @@ class WarehouseOptimizer:
             'time_sec':    round(elapsed, 2),
         }
 
-    # ── Ürün Yerleşimi (ABC Sınıflandırması) ──────────────────────
+    # Ürün Yerleşimi (ABC Sınıflandırması)
 
     def place_products(self, products: list, abc_classification: list) -> dict:
         """
@@ -342,7 +342,7 @@ class WarehouseOptimizer:
             'time_sec':        result['time_sec'],
         }
 
-    # ── Apriori Proximity Cluster → Guided Seed ──────────────────
+    # Apriori Proximity Cluster 
     def build_apriori_guided_seed(self,
                                    lc_list: list,
                                    rules: list,
@@ -369,8 +369,6 @@ class WarehouseOptimizer:
 
         # Ürün → LC eşlemesi (ters)
         prod_to_lc = {v: k for k, v in lc_to_prod.items()}
-
-        # Union-Find
         parent = {}
 
         def find(x):
@@ -430,7 +428,7 @@ class WarehouseOptimizer:
 
         return guided
 
-    # ── Ürün listesiyle rota (frontend'den gelecek) ───────────────
+    # Ürün listesiyle rota 
 
     def optimize_route(self, products: list) -> dict:
         """
